@@ -5,6 +5,10 @@ class ExitRequested(Exception):
     """Сигнал о том, что пользователь запросил выход."""
 
 
+class CommandError(Exception):
+    """Ошибка выполнения команды."""
+
+
 def cmd_ls(args):
     """Заглушка ls: выводит своё имя и аргументы."""
     return f"ls: args={args}"
@@ -31,11 +35,12 @@ def execute(tokens):
     """Выполняет команду и возвращает текст для вывода.
 
     Первый токен — имя команды, остальные — аргументы.
+    Бросает CommandError, если команда неизвестна.
     """
     if not tokens:
         return ""
     name, args = tokens[0], tokens[1:]
     handler = COMMANDS.get(name)
     if handler is None:
-        return f"{name}: command not found"
+        raise CommandError(f"{name}: command not found")
     return handler(args)

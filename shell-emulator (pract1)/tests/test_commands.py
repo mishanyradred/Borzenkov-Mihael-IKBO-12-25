@@ -2,7 +2,7 @@
 
 import unittest
 
-from src.commands import ExitRequested, execute
+from src.commands import CommandError, ExitRequested, execute
 
 
 class ExecuteTests(unittest.TestCase):
@@ -17,8 +17,10 @@ class ExecuteTests(unittest.TestCase):
         self.assertEqual(execute(["cd", "/"]), "cd: args=['/']")
 
     def test_unknown_command(self):
-        """Неизвестная команда даёт сообщение об ошибке."""
-        self.assertIn("not found", execute(["pwd"]))
+        """Неизвестная команда вызывает CommandError."""
+        with self.assertRaises(CommandError) as context:
+            execute(["pwd"])
+        self.assertIn("not found", str(context.exception))
 
     def test_empty_tokens(self):
         """Пустой список токенов ничего не выводит."""

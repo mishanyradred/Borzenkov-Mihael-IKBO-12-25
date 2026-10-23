@@ -31,6 +31,18 @@ class ParseLineTests(unittest.TestCase):
         with self.assertRaises(ParseError):
             parse_line('ls "oops')
 
+    def test_comment_line(self):
+        """Строка-комментарий даёт пустой список."""
+        self.assertEqual(parse_line("# просто комментарий"), [])
+
+    def test_inline_comment(self):
+        """Комментарий в конце строки отбрасывается."""
+        self.assertEqual(parse_line("ls /tmp # список"), ["ls", "/tmp"])
+
+    def test_hash_in_quotes(self):
+        """Символ # внутри кавычек не начинает комментарий."""
+        self.assertEqual(parse_line('ls "a#b"'), ["ls", "a#b"])
+
 
 if __name__ == "__main__":
     unittest.main()
