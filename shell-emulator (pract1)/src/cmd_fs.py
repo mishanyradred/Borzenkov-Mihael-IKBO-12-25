@@ -1,4 +1,4 @@
-"""Команды работы с файловой системой: ls, cd, du."""
+"""Команды работы с файловой системой: ls, cd, du, mkdir, cp."""
 
 import posixpath
 
@@ -107,3 +107,38 @@ def cmd_du(vfs, args):
         else:
             lines.extend(collect_sizes(node, path, "a" in flags, fmt))
     return "\n".join(lines)
+
+
+def cmd_mkdir(vfs, args):
+    """mkdir [-p] путь...: создать папки в памяти.
+
+    -p — создавать недостающих родителей, не считать ошибкой уже
+    существующую папку.
+    """
+    flags, paths = split_options(args, "p")
+    if not paths:
+        raise CommandError("missing operand")
+    for path in paths:
+        vfs.make_dir(path, parents="p" in flags)
+    return ""
+
+
+def cmd_cp(vfs, args):
+    """cp [-r] источник... назначение: копировать в памяти.
+
+    Файл копируется под новым именем, перезаписывая существующий, или
+    внутрь папки-назначения. Для папки нужен -r. Несколько источников
+    допустимы, только если назначение — папка.
+    """
+    flags, operands = split_options(args, "r")
+    if not operands:
+        raise CommandError("missing file operand")
+    if not operands[1:]:
+        message = f"missing destination file operand after '{operands[0]}'"
+        raise CommandError(message)
+    *sources, dest = operands
+    if sources[1:] and not vfs.is_dir(dest):
+        raise CommandError(f"target '{dest}' is not a directory")
+    for source in sources:
+        vfs.copy(source, dest, "r" in flags)
+    return ""

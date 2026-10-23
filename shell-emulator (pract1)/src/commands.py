@@ -1,6 +1,6 @@
 """Реестр команд эмулятора."""
 
-from src.cmd_fs import cmd_cd, cmd_du, cmd_ls
+from src.cmd_fs import cmd_cd, cmd_cp, cmd_du, cmd_ls, cmd_mkdir
 from src.cmd_text import cmd_uniq
 from src.errors import CommandError, ExitRequested, VFSError
 
@@ -14,6 +14,8 @@ COMMANDS = {
     "ls": cmd_ls,
     "cd": cmd_cd,
     "du": cmd_du,
+    "cp": cmd_cp,
+    "mkdir": cmd_mkdir,
     "uniq": cmd_uniq,
     "exit": cmd_exit,
 }

@@ -6,7 +6,7 @@
 
 ## Функции
 
-- команды `ls`, `cd`, `du`, `uniq`, `exit` (описаны ниже);
+- команды `ls`, `cd`, `du`, `uniq`, `mkdir`, `cp`, `exit` (описаны ниже);
 - приглашение показывает текущую папку VFS (`/home/user$`);
 - раскрытие переменных окружения реальной ОС (`$HOME`);
 - кавычки в аргументах (`ls "my dir"`);
@@ -85,7 +85,12 @@ path,type,content
 | `cd [путь]` | сменить текущую папку; без пути — в корень `/` |
 | `du [-s] [-h] [-a] [путь...]` | размер в байтах: по умолчанию для каждой вложенной папки и итог; `-s` — только итог, `-h` — вид 1.5K, `-a` — включая файлы |
 | `uniq [-c] [-d] [-u] [-i] файл` | убрать соседние повторы строк файла из VFS; `-c` — счётчик, `-d` — только повторяющиеся, `-u` — только уникальные, `-i` — без учёта регистра |
+| `mkdir [-p] путь...` | создать папки в памяти; `-p` — создавать недостающих родителей, существующая папка не считается ошибкой |
+| `cp [-r] источник... назначение` | копировать в памяти: файл под новым именем (с перезаписью) или внутрь папки; папку — только с `-r` (повторное копирование сливает папки); несколько источников — только в папку |
 | `exit` | закрыть эмулятор |
+
+Команды `mkdir` и `cp` меняют только дерево в памяти, CSV-файл VFS
+остаётся нетронутым.
 
 Ошибки (нет пути, это не папка, неверный флаг, лишние аргументы,
 двоичный файл в `uniq` и т. д.) выводятся как `команда: сообщение` и
@@ -95,7 +100,7 @@ path,type,content
 
 ```bash
 make run
-make run ARGS="--vfs vfs/deep.csv --script scripts/startup_stage4.txt"
+make run ARGS="--vfs vfs/deep.csv --script scripts/startup_stage5.txt"
 make test
 ```
 
@@ -123,16 +128,18 @@ make test
 | `run_vfs_bad_type` | ошибка: неизвестный тип узла |
 | `run_vfs_no_parent` | ошибка: нет родительской папки |
 | `run_stage4` | все команды этапа 4 с VFS и ошибками |
+| `run_stage5` | `mkdir` и `cp` со всеми режимами и ошибками |
 
 Стартовые скрипты эмулятора: `startup_demo.txt`, `startup_errors.txt`,
 `startup_exit.txt`, `startup_stage3.txt` (этапы 1–3 с VFS и ошибками)
-и `startup_stage4.txt` (все режимы `ls`, `cd`, `du`, `uniq` с ошибками).
+`startup_stage4.txt` (все режимы `ls`, `cd`, `du`, `uniq` с ошибками) и
+`startup_stage5.txt` (все режимы `mkdir` и `cp` с ошибками).
 
 ## Структура
 
 - `src/parser.py` — разбор строки, переменные окружения, комментарии;
 - `src/commands.py` — реестр команд и их запуск;
-- `src/cmd_fs.py` — команды `ls`, `cd`, `du`;
+- `src/cmd_fs.py` — команды `ls`, `cd`, `du`, `mkdir`, `cp`;
 - `src/cmd_text.py` — команда `uniq`;
 - `src/options.py` — разбор флагов команд;
 - `src/config.py` — параметры командной строки;
@@ -165,6 +172,12 @@ d       35 docs
       2 cherry
 /home/user/docs$ cd /nope
 script error (line 25): cd: /nope: No such file or directory
+
+$ ./scripts/run_stage5.sh
+/$ mkdir -p /tmp/x/y/z
+/$ cp -r /home/user/docs /backup/docs-copy
+/$ cp /etc/hosts /etc/hosts
+script error (line 43): cp: '/etc/hosts' and '/etc/hosts' are the same file
 
 $ ./scripts/run_vfs_missing.sh
 vfs error: vfs/no_such.csv: No such file or directory

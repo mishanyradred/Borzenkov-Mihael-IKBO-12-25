@@ -1,0 +1,53 @@
+# Стартовый скрипт этапа 5: mkdir и cp меняют VFS только в памяти (vfs/deep.csv)
+
+# ---- mkdir: простой режим, несколько папок, -p ----
+mkdir /tmp/new
+mkdir /tmp/a /tmp/b
+ls /tmp
+cd /tmp
+mkdir rel
+mkdir -p x/y/z
+ls
+ls x/y
+mkdir -p /home/user
+# ошибки mkdir
+mkdir /home
+mkdir /nope/dir
+mkdir /etc/hosts/dir
+mkdir -p /etc/hosts/dir
+mkdir
+mkdir -z /tmp/q
+
+# ---- cp: файл под новым именем, внутрь папки, перезапись ----
+cd /
+cp /etc/hosts /etc/hosts.bak
+ls /etc
+cp /etc/hosts /tmp
+cp /home/user/notes.txt /tmp/copy.txt
+du -a /tmp
+cp /etc/hosts /home/user/notes.txt
+uniq /home/user/notes.txt
+# несколько источников в папку
+mkdir /backup
+cp /etc/hosts /etc/hosts.bak /backup
+ls /backup
+
+# ---- cp -r: папка целиком, внутрь папки, слияние ----
+cp -r /home/user/docs /backup/docs-copy
+ls -l /backup/docs-copy
+cp -r /home/user/docs /backup
+cp -r /home/user/docs /backup
+du /backup
+# ошибки cp
+cp /home/user/docs /tmp/docs
+cp /etc/hosts /etc/hosts
+cp /etc/hosts /etc
+cp /nope /tmp
+cp /etc/hosts /nope/x
+cp /etc/hosts /bin/tool.bin /etc/hosts
+cp -r /home/user /home/user/docs
+cp -r / /tmp
+cp -r /home/user/docs /etc/hosts
+cp
+cp /etc/hosts
+cp -z a b
