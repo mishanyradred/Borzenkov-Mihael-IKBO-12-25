@@ -1,0 +1,51 @@
+# Стартовый скрипт этапа 4: ls, cd, du, uniq с VFS (vfs/deep.csv)
+
+# ---- ls: без аргументов, подробный формат, скрытые файлы ----
+ls
+ls -l /home/user
+ls -a /home/user
+ls -la /home/user
+# несколько путей и файл вместо папки
+ls /etc /bin
+ls /etc/hosts
+# ошибки ls
+ls /nope
+ls -z
+ls /etc/hosts/x
+
+# ---- cd: абсолютные и относительные пути, .. и ошибки ----
+cd /home/user
+ls docs
+cd docs/work
+ls -l
+cd ../..
+cd
+ls
+cd /home/user/notes.txt
+cd /nope
+cd /etc /bin
+
+# ---- du: итог, папки, файлы, человекочитаемый вид ----
+du -s /home/user
+du /home/user/docs
+du -a /etc
+du -sh /home
+du /etc/hosts
+cd /etc
+du -s
+du /nope
+du -q
+
+# ---- uniq: все режимы ----
+uniq /home/user/notes.txt
+uniq -c /home/user/notes.txt
+uniq -d /home/user/notes.txt
+uniq -u /home/user/notes.txt
+uniq -ic /home/user/notes.txt
+uniq /home/user/docs/empty.txt
+# ошибки uniq
+uniq
+uniq /home/user/notes.txt /etc/hosts
+uniq /nope.txt
+uniq /etc
+uniq /bin/tool.bin

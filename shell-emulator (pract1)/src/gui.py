@@ -60,9 +60,9 @@ class EmulatorWindow:
 
         Возвращает False, если запрошен выход из эмулятора.
         """
-        self.write(PROMPT + line)
+        self.write(f"{self.vfs.pwd()}{PROMPT}{line}")
         try:
-            result = execute(parse_line(line))
+            result = execute(self.vfs, parse_line(line))
         except EmulatorError as error:
             self.write(format_error(error, line_no))
             return True

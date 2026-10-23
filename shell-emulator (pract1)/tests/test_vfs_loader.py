@@ -6,8 +6,7 @@ import unittest
 
 from src.errors import VFSError
 from src.vfs_loader import load_vfs
-
-VFS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "vfs")
+from tests.helpers import VFS_DIR
 
 
 def sample(name):

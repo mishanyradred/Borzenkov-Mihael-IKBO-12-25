@@ -6,8 +6,8 @@
 
 ## Функции
 
-- `ls`, `cd` — пока заглушки, печатают своё имя и аргументы;
-- `exit` — закрывает окно;
+- команды `ls`, `cd`, `du`, `uniq`, `exit` (описаны ниже);
+- приглашение показывает текущую папку VFS (`/home/user$`);
 - раскрытие переменных окружения реальной ОС (`$HOME`);
 - кавычки в аргументах (`ls "my dir"`);
 - комментарии: всё после `#` вне кавычек игнорируется;
@@ -73,11 +73,29 @@ path,type,content
 `script error: cannot read ...`, после чего эмулятор остаётся в
 интерактивном режиме. Команда `exit` в скрипте закрывает окно.
 
+## Команды
+
+Пути могут быть абсолютными (`/home/user`) и относительными, поддержаны
+`.` и `..` (выше корня подняться нельзя). Флаги из одной буквы можно
+объединять (`ls -la`), `--` заканчивает флаги.
+
+| Команда | Описание |
+|---|---|
+| `ls [-l] [-a] [путь...]` | содержимое папки или сведения о файле; `-l` — тип, размер и имя, `-a` — скрытые файлы (имя с точки); для нескольких путей выводятся заголовки |
+| `cd [путь]` | сменить текущую папку; без пути — в корень `/` |
+| `du [-s] [-h] [-a] [путь...]` | размер в байтах: по умолчанию для каждой вложенной папки и итог; `-s` — только итог, `-h` — вид 1.5K, `-a` — включая файлы |
+| `uniq [-c] [-d] [-u] [-i] файл` | убрать соседние повторы строк файла из VFS; `-c` — счётчик, `-d` — только повторяющиеся, `-u` — только уникальные, `-i` — без учёта регистра |
+| `exit` | закрыть эмулятор |
+
+Ошибки (нет пути, это не папка, неверный флаг, лишние аргументы,
+двоичный файл в `uniq` и т. д.) выводятся как `команда: сообщение` и
+не прерывают работу.
+
 ## Запуск и тесты
 
 ```bash
 make run
-make run ARGS="--vfs vfs/deep.csv --script scripts/startup_stage3.txt"
+make run ARGS="--vfs vfs/deep.csv --script scripts/startup_stage4.txt"
 make test
 ```
 
@@ -104,15 +122,19 @@ make test
 | `run_vfs_bad_header` | ошибка: неверный заголовок CSV |
 | `run_vfs_bad_type` | ошибка: неизвестный тип узла |
 | `run_vfs_no_parent` | ошибка: нет родительской папки |
+| `run_stage4` | все команды этапа 4 с VFS и ошибками |
 
 Стартовые скрипты эмулятора: `startup_demo.txt`, `startup_errors.txt`,
-`startup_exit.txt` и `startup_stage3.txt` (все команды этапов 1–3 с
-VFS и ошибками).
+`startup_exit.txt`, `startup_stage3.txt` (этапы 1–3 с VFS и ошибками)
+и `startup_stage4.txt` (все режимы `ls`, `cd`, `du`, `uniq` с ошибками).
 
 ## Структура
 
 - `src/parser.py` — разбор строки, переменные окружения, комментарии;
-- `src/commands.py` — команды эмулятора;
+- `src/commands.py` — реестр команд и их запуск;
+- `src/cmd_fs.py` — команды `ls`, `cd`, `du`;
+- `src/cmd_text.py` — команда `uniq`;
+- `src/options.py` — разбор флагов команд;
 - `src/config.py` — параметры командной строки;
 - `src/script.py` — чтение стартового скрипта;
 - `src/vfs.py` — дерево VFS в памяти;
@@ -126,15 +148,23 @@ VFS и ошибками).
 ## Примеры
 
 ```
-$ ./scripts/run_vfs_deep.sh
-[debug] параметры запуска:
-[debug]   --vfs    = vfs/deep.csv
-[debug]   --script = scripts/startup_stage3.txt
+$ ./scripts/run_stage4.sh
 [vfs] загружено узлов: 14
-$ ls -l /home/user
-ls: args=['-l', '/home/user']
-$ ls "oops
-script error (line 10): No closing quotation
+/$ ls -l /home/user
+d       35 docs
+-       46 notes.txt
+/$ cd /home/user/docs
+/home/user/docs$ du /home/user/docs
+23	/home/user/docs/work
+35	/home/user/docs
+/home/user/docs$ uniq -c /home/user/notes.txt
+      2 apple
+      1 banana
+      1 apple
+      1 Cherry
+      2 cherry
+/home/user/docs$ cd /nope
+script error (line 25): cd: /nope: No such file or directory
 
 $ ./scripts/run_vfs_missing.sh
 vfs error: vfs/no_such.csv: No such file or directory
