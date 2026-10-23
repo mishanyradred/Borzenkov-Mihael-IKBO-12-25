@@ -1,12 +1,6 @@
 """Команды эмулятора."""
 
-
-class ExitRequested(Exception):
-    """Сигнал о том, что пользователь запросил выход."""
-
-
-class CommandError(Exception):
-    """Ошибка выполнения команды."""
+from src.errors import CommandError, ExitRequested
 
 
 def cmd_ls(args):

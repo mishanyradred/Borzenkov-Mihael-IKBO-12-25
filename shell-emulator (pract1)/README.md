@@ -1,7 +1,8 @@
 # Эмулятор оболочки UNIX
 
 Учебный эмулятор командной строки с графическим интерфейсом (tkinter)
-и виртуальной файловой системой (VFS).
+и виртуальной файловой системой (VFS), которая целиком хранится
+в памяти.
 
 ## Функции
 
@@ -10,18 +11,56 @@
 - раскрытие переменных окружения реальной ОС (`$HOME`);
 - кавычки в аргументах (`ls "my dir"`);
 - комментарии: всё после `#` вне кавычек игнорируется;
-- обработка ошибок: неизвестная команда, незакрытая кавычка.
+- загрузка VFS из CSV-файла;
+- обработка ошибок: неизвестная команда, незакрытая кавычка, ошибки
+  стартового скрипта и загрузки VFS.
 
 ## Параметры командной строки
 
 | Параметр | Описание |
 |---|---|
-| `--vfs ПУТЬ` | путь к физическому расположению VFS |
+| `--vfs ПУТЬ` | путь к физическому расположению VFS (CSV-файл) |
 | `--script ПУТЬ` | путь к стартовому скрипту |
 
 При запуске все заданные параметры выводятся в окно в виде отладочных
 строк `[debug] ...`. Заголовок окна содержит имя VFS (имя файла из
 `--vfs`, а без параметра — `vfs`).
+
+## Формат VFS
+
+VFS задаётся CSV-файлом в кодировке UTF-8 с заголовком
+`path,type,content`:
+
+| Колонка | Описание |
+|---|---|
+| `path` | абсолютный путь узла (`/home/user/a.txt`) |
+| `type` | `dir` — папка, `file` — файл |
+| `content` | содержимое файла в base64 (для папки пусто) |
+
+Вложенность задаётся полным путём, поэтому дерево любой глубины
+хранится плоским списком. Родительская папка каждого узла должна
+присутствовать в файле, порядок строк не важен. Корневая строка
+`/,dir,` необязательна. Двоичные файлы хранятся в base64 так же, как
+текстовые.
+
+```csv
+path,type,content
+/,dir,
+/docs,dir,
+/docs/c.txt,file,dGhpcmQK
+```
+
+Все операции выполняются в памяти: данные VFS на диск не
+распаковываются и файл CSV не изменяется.
+
+Ошибки загрузки (файл не найден, неверный заголовок, неверное число
+колонок, неизвестный тип, неверный base64, нет родительской папки)
+выводятся как `vfs error: ...` с номером строки, эмулятор при этом
+продолжает работу с пустой VFS.
+
+Образцы в папке `vfs/`: `minimal.csv` (только корень), `files.csv`
+(несколько файлов), `deep.csv` (5 уровней вложенности, двоичный
+файл), а в `vfs/invalid/` — файлы с ошибками.
 
 ## Стартовый скрипт
 
@@ -38,11 +77,11 @@
 
 ```bash
 make run
-make run ARGS="--vfs vfs/demo.csv --script scripts/startup_demo.txt"
+make run ARGS="--vfs vfs/deep.csv --script scripts/startup_stage3.txt"
 make test
 ```
 
-Или напрямую: `python3 -m src.main --script scripts/startup_demo.txt`.
+Или напрямую: `python3 -m src.main --vfs vfs/files.csv`.
 
 ## Скрипты запуска
 
@@ -57,9 +96,18 @@ make test
 | `run_full` | оба параметра |
 | `run_script_errors` | скрипт с ошибками в строках |
 | `run_missing_script` | несуществующий файл скрипта |
+| `run_script_exit` | команда `exit` в скрипте |
+| `run_vfs_minimal` | минимальная VFS |
+| `run_vfs_files` | VFS с несколькими файлами |
+| `run_vfs_deep` | VFS с 5 уровнями вложенности |
+| `run_vfs_missing` | ошибка: файл VFS не найден |
+| `run_vfs_bad_header` | ошибка: неверный заголовок CSV |
+| `run_vfs_bad_type` | ошибка: неизвестный тип узла |
+| `run_vfs_no_parent` | ошибка: нет родительской папки |
 
-Стартовые скрипты эмулятора: `scripts/startup_demo.txt` и
-`scripts/startup_errors.txt`.
+Стартовые скрипты эмулятора: `startup_demo.txt`, `startup_errors.txt`,
+`startup_exit.txt` и `startup_stage3.txt` (все команды этапов 1–3 с
+VFS и ошибками).
 
 ## Структура
 
@@ -67,24 +115,27 @@ make test
 - `src/commands.py` — команды эмулятора;
 - `src/config.py` — параметры командной строки;
 - `src/script.py` — чтение стартового скрипта;
+- `src/vfs.py` — дерево VFS в памяти;
+- `src/vfs_loader.py` — загрузка VFS из CSV;
+- `src/errors.py` — исключения;
 - `src/gui.py` — окно приложения;
 - `src/main.py` — точка входа;
-- `tests/` — модульные тесты.
+- `tests/` — модульные тесты;
+- `vfs/` — образцы VFS.
 
 ## Примеры
 
 ```
-$ ./scripts/run_script_errors.sh
+$ ./scripts/run_vfs_deep.sh
 [debug] параметры запуска:
-[debug]   --vfs    = (не задан)
-[debug]   --script = scripts/startup_errors.txt
-$ # Стартовый скрипт с ошибками: выполнение продолжается после каждой
-$ ls
-ls: args=[]
+[debug]   --vfs    = vfs/deep.csv
+[debug]   --script = scripts/startup_stage3.txt
+[vfs] загружено узлов: 14
+$ ls -l /home/user
+ls: args=['-l', '/home/user']
 $ ls "oops
-script error (line 3): No closing quotation
-$ pwd
-script error (line 4): pwd: command not found
-$ cd /
-cd: args=['/']
+script error (line 10): No closing quotation
+
+$ ./scripts/run_vfs_missing.sh
+vfs error: vfs/no_such.csv: No such file or directory
 ```

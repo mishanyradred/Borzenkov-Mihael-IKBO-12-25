@@ -1,0 +1,3 @@
+path,type,content
+/,dir,
+/a.txt,file,@@not-base64@@

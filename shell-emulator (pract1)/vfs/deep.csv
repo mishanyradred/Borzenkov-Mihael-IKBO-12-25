@@ -1,0 +1,16 @@
+path,type,content
+/,dir,
+/home,dir,
+/home/user,dir,
+/home/user/docs,dir,
+/home/user/docs/work,dir,
+/home/user/docs/work/report.txt,file,UXVhcnRlcmx5IHJlcG9ydApRMQpRMgo=
+/home/user/docs/readme.txt,file,SGVsbG8sIFZGUyEK
+/home/user/docs/empty.txt,file,
+/home/user/notes.txt,file,YXBwbGUKYXBwbGUKYmFuYW5hCmFwcGxlCkNoZXJyeQpjaGVycnkKY2hlcnJ5Cg==
+/home/user/.profile,file,ZXhwb3J0IEVESVRPUj12aQo=
+/etc,dir,
+/etc/hosts,file,MTI3LjAuMC4xIGxvY2FsaG9zdAo=
+/bin,dir,
+/bin/tool.bin,file,//4AAYA=
+/tmp,dir,

@@ -2,10 +2,13 @@
 
 import tkinter as tk
 
-from src.commands import CommandError, ExitRequested, execute
+from src.commands import execute
 from src.config import describe, vfs_title
-from src.parser import ParseError, parse_line
+from src.errors import EmulatorError, ExitRequested, ParseError, VFSError
+from src.parser import parse_line
 from src.script import ScriptError, read_script
+from src.vfs import VFS
+from src.vfs_loader import load_vfs
 
 PROMPT = "$ "
 OUTPUT_HEIGHT = 24
@@ -30,6 +33,7 @@ class EmulatorWindow:
     def __init__(self, config):
         """Создаёт окно с заголовком, содержащим имя VFS."""
         self.config = config
+        self.vfs = VFS()
         self.root = tk.Tk()
         self.root.title(f"Эмулятор - [{vfs_title(config)}]")
         self.output = tk.Text(
@@ -59,7 +63,7 @@ class EmulatorWindow:
         self.write(PROMPT + line)
         try:
             result = execute(parse_line(line))
-        except (ParseError, CommandError) as error:
+        except EmulatorError as error:
             self.write(format_error(error, line_no))
             return True
         except ExitRequested:
@@ -74,6 +78,22 @@ class EmulatorWindow:
         self.entry.delete(0, "end")
         if not self.handle_line(line):
             self.root.destroy()
+
+    def load_vfs(self):
+        """Загружает VFS из файла, заданного параметром --vfs.
+
+        При ошибке сообщает о ней и возвращает пустую VFS.
+        """
+        path = self.config.vfs_path
+        if not path:
+            return VFS()
+        try:
+            vfs = load_vfs(path)
+        except VFSError as error:
+            self.write(f"vfs error: {error}")
+            return VFS()
+        self.write(f"[vfs] загружено узлов: {vfs.root.descendants()}")
+        return vfs
 
     def run_startup_script(self):
         """Выполняет стартовый скрипт, имитируя диалог с пользователем.
@@ -92,9 +112,10 @@ class EmulatorWindow:
         return True
 
     def start(self):
-        """Выводит параметры запуска и выполняет стартовый скрипт."""
+        """Выводит параметры, загружает VFS, выполняет стартовый скрипт."""
         for text in describe(self.config):
             self.write(text)
+        self.vfs = self.load_vfs()
         if self.config.script_path and not self.run_startup_script():
             self.root.destroy()
 

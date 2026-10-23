@@ -3,9 +3,7 @@
 import os
 import shlex
 
-
-class ParseError(Exception):
-    """Ошибка разбора командной строки."""
+from src.errors import ParseError
 
 
 def parse_line(line):
